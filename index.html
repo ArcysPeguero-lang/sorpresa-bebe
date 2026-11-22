@@ -61,7 +61,8 @@ const CONFIG = {
     magaly:      { nombre: "Magaly",       rol: "tia", mensaje: "Hay alegrías que no caben en el pecho, y esta queríamos que la sintieras con nosotros." },
     anthony:     { nombre: "Anthony",      rol: "tio", mensaje: "Muy pronto vas a tener a alguien pequeñito que te va a mirar como a su héroe." },
     zoila:       { nombre: "Zoila",        rol: "tia", mensaje: "Tu cariño siempre ha sido parte de nuestra vida, y muy pronto también lo será de la suya." },
-    dhariana:    { nombre: "Dhariana",     rol: "ninguno", mensaje: "No podíamos guardar esta felicidad sin compartirla contigo." }
+    dhariana:    { nombre: "Dhariana",     rol: "ninguno", mensaje: "No podíamos guardar esta felicidad sin compartirla contigo." },
+    joelyrose:   { nombre: "Joel y Rose",  rol: "tios", mensaje: "Muy pronto alguien chiquitito va a llegar a llenar sus vidas de ternura… y ya tiene un lugar reservado en su corazón." }
   }
 };
 </script>
@@ -355,7 +356,8 @@ main{position:relative;z-index:1}
 <script>
 (() => {
   /* ---------- datos de la persona ---------- */
-  const ROLES = { tio:"tío", tia:"tía", abuelo:"abuelo", abuela:"abuela", padrino:"padrino", madrina:"madrina", primo:"primo", prima:"prima", ninguno:null };
+  const ROLES = { tio:"tío", tia:"tía", abuelo:"abuelo", abuela:"abuela", padrino:"padrino", madrina:"madrina", primo:"primo", prima:"prima", tios:"tíos", abuelos:"abuelos", padrinos:"padrinos", primos:"primos", ninguno:null };
+  const PLURAL = new Set(["tios", "abuelos", "padrinos", "primos"]);
   const DEFAULT_MSG = {
     tio:"Prepárate, porque alguien muy pequeñito está por llegar a tu vida… y ya tiene un lugar reservado en tu corazón.",
     abuelo:"La familia está a punto de crecer, y con ella todo el amor que tú nos has enseñado a dar.",
@@ -365,6 +367,10 @@ main{position:relative;z-index:1}
   };
   DEFAULT_MSG.tia = DEFAULT_MSG.tio; DEFAULT_MSG.abuela = DEFAULT_MSG.abuelo;
   DEFAULT_MSG.madrina = DEFAULT_MSG.padrino; DEFAULT_MSG.prima = DEFAULT_MSG.primo;
+  DEFAULT_MSG.tios = "Prepárense, porque alguien muy pequeñito está por llegar a sus vidas… y ya tiene un lugar reservado en su corazón.";
+  DEFAULT_MSG.abuelos = "La familia está a punto de crecer, y con ella todo el amor que ustedes nos han enseñado a dar.";
+  DEFAULT_MSG.padrinos = "Queremos que esta personita crezca rodeada de gente buena, y ustedes son de las mejores que conocemos.";
+  DEFAULT_MSG.primos = "Muy pronto van a tener un nuevo compañero de aventuras.";
 
   const norm = s => (s || "").toString().normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
   const params = new URLSearchParams(location.search);
@@ -376,28 +382,30 @@ main{position:relative;z-index:1}
 
   const nombre = (p && p.nombre || "").trim().slice(0, 40);
   const rol = p && (norm(p.rol) in ROLES) ? norm(p.rol) : "ninguno";
+  const plural = PLURAL.has(rol) || !!(p && p.plural);
   let mensaje = (p && p.mensaje || "").trim().slice(0, 400);
   // Si el mensaje empieza con el nombre ("Carlos, ..."), lo quitamos porque ya aparece arriba
   if (nombre && norm(mensaje).startsWith(norm(nombre) + ",")) {
     mensaje = mensaje.slice(nombre.length + 1).trim();
     mensaje = mensaje.charAt(0).toUpperCase() + mensaje.slice(1);
   }
-  if (!mensaje) mensaje = DEFAULT_MSG[rol];
+  if (!mensaje) mensaje = (plural && rol === "ninguno") ? "No podíamos guardar esta felicidad sin compartirla con ustedes." : DEFAULT_MSG[rol];
 
   const $ = id => document.getElementById(id);
-  if (nombre) { $("introName").textContent = nombre; document.title = `${nombre}, tenemos una sorpresa para ti 🎁`; }
+  if (nombre) { $("introName").textContent = nombre; document.title = `${nombre}, tenemos una sorpresa para ${plural ? "ustedes" : "ti"} 🎁`; }
   if (nombre) $("nameLine").textContent = nombre + ","; else $("nameLine").remove();
   $("msg").textContent = mensaje;
 
   const roleEl = $("role");
   if (ROLES[rol]) {
-    roleEl.append("¡Vas a ser");
+    if (plural) $("placeLine").textContent = "Y ustedes tienen un lugar muy especial en esta historia…";
+    roleEl.append(plural ? "¡Van a ser" : "¡Vas a ser");
     const g = document.createElement("span"); g.className = "gold"; g.textContent = ROLES[rol] + "!";
     roleEl.append(g);
   } else {
-    $("placeLine").textContent = "Y tú tienes un lugar muy especial en nuestra historia…";
+    $("placeLine").textContent = plural ? "Y ustedes tienen un lugar muy especial en nuestra historia…" : "Y tú tienes un lugar muy especial en nuestra historia…";
     roleEl.classList.add("plain");
-    roleEl.textContent = "Por eso queríamos que fueras de los primeros en saberlo ❤️";
+    roleEl.textContent = plural ? "Por eso queríamos que fueran de los primeros en saberlo ❤️" : "Por eso queríamos que fueras de los primeros en saberlo ❤️";
   }
 
   $("finalLine").textContent = CONFIG.fraseFinal;
